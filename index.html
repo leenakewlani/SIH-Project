@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PastPort - AR Heritage</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Background video styling */
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    header {
+      position: relative;
+      margin: 0;
+      background: url("assets/3052ce6d0f1e516af555d51c8b7fcd90.jpg") no-repeat center center/cover;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 400px;
+    }
+
+    /* Top-right buttons */
+    .header-buttons {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .header-buttons button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.85);
+      color: #333;
+      transition: transform 0.25s ease, background 0.3s ease;
+    }
+
+    .header-buttons button:hover {
+      transform: scale(1.15);
+      background: #ff9800;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      margin: 0;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    }
+
+    header p {
+      font-size: 1.5rem;
+      margin: 10px 0 0;
+      text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
+    }
+
+    main, footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    .heritage-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px;
+    }
+
+    /* ===== AR Viewer Box ===== */
+    .ar-viewer {
+      background: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease;
+    }
+
+    .ar-viewer:hover {
+      transform: translateY(-5px);
+    }
+
+    .ar-viewer h2 {
+      margin-bottom: 20px;
+      color: #222;
+      font-size: 1.8rem;
+    }
+
+    .state-list {
+      text-align: left;
+      margin-top: 15px;
+      padding-left: 20px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .state-list li {
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
+    }
+
+    .state-list li:hover {
+      background: #ff9800;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    /* Zoom animation for click */
+    .zoom-pop {
+      animation: zoomEffect 0.6s ease-in-out;
+    }
+
+    @keyframes zoomEffect {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* ===== MODALS ===== */
+    .modal {
+      display: none; 
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      animation: zoomIn 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      color: black;
+    }
+
+    .location-icon {
+      font-size: 48px;
+      color: #ff9800;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- Buttons at top-right -->
+    <div class="header-buttons">
+      <button onclick="openLogin()">Login</button>
+      <button onclick="openGPS()">GPS Itinerary</button>
+    </div>
+
+    <h1>PastPort</h1>
+    <p>Experience India's Cultural Heritage in Augmented Reality</p>
+  </header>
+
+  <!-- Background Video -->
+  <video id="bg-video" class="video-background" autoplay muted playsinline></video>
+
+  <!-- ===== LOGIN MODAL ===== -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeLogin()">&times;</span>
+      <h2>Login</h2>
+      <input type="email" id="email" placeholder="Enter Email" required>
+      <input type="password" id="password" placeholder="Enter Password" required>
+      <button onclick="submitLogin()">Login</button>
+    </div>
+  </div>
+
+  <!-- ===== GPS MODAL ===== -->
+  <div id="gpsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeGPS()">&times;</span>
+      <div class="location-icon">📍</div>
+      <h2>Allow Location Access</h2>
+      <p>We need your location to create a personalized itinerary.</p>
+      <button onclick="getLocation()">Allow</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="heritage-group">
+      <div class="hero">
+        <h2>Discover Heritage Sites</h2>
+        <p>Take a virtual tour of India's most iconic cultural landmarks.</p>
+      </div>
+
+      <!-- Updated AR Viewer Box -->
+      <div class="ar-viewer">
+        <h2>Explore the World With Us</h2>
+        <ol class="state-list">
+          <li>1. Andhra Pradesh</li>
+          <li>2. Arunachal Pradesh</li>
+          <li>3. Assam</li>
+          <li>4. Bihar</li>
+          <li>5. Chhattisgarh</li>
+          <li>6. Goa</li>
+          <li>7. Gujarat</li>
+          <li>8. Haryana</li>
+          <li>9. Himachal Pradesh</li>
+          <li>10. Jharkhand</li>
+          <li>11. Karnataka</li>
+          <li>12. Kerala</li>
+          <li>13. Madhya Pradesh</li>
+          <li>14. Maharashtra</li>
+          <li>15. Manipur</li>
+          <li>16. Meghalaya</li>
+          <li>17. Mizoram</li>
+          <li>18. Nagaland</li>
+          <li>19. Odisha</li>
+          <li>20. Punjab</li>
+          <li>21. Rajasthan</li>
+          <li>22. Sikkim</li>
+          <li>23. Tamil Nadu</li>
+          <li>24. Telangana</li>
+          <li>25. Tripura</li>
+          <li>26. Uttar Pradesh</li>
+          <li>27. Uttarakhand</li>
+          <li>28. West Bengal</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="info">
+      <h2>About This Project</h2>
+      <p>This platform brings heritage sites to life with AR technology, making them accessible even in remote areas with low bandwidth.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 PastPort | Smart India Hackathon</p>
+  </footer>
+
+  <script>
+    const bgVideo = document.getElementById("bg-video");
+
+    // ===== Video Playlist =====
+    const videos = [
+      "https://media.istockphoto.com/id/1153730555/video/taj-mahal-a-mausoleum-mosque-located-in-agra-india-on-the-banks-of-yamuna.mp4?s=mp4-640x640-is&k=20&c=pKzsyyF7k4X7iYO3dv-9Q5rDqQmIT4DSpE1lP3CiCZw=",
+      "https://media.istockphoto.com/id/1488549727/video/aerial-view-of-of-iconic-monument-in-city-agra-famous-marble-mausoleum-on-right-bank.mp4?s=mp4-640x640-is&k=20",
+      "https://media.istockphoto.com/id/1222518113/video/golden-temple-harmandir-sahib-of-sikhism-religion-in-amritsar-india.mp4?s=mp4-640x640-is&k=20",
+      "https://media.istockphoto.com/id/1167643782/video/wide-shot-of-two-sikh-worshipers-at-the-golden-temple-in-amritsar-4k-60p.mp4?s=mp4-640x640-is&k=20",
+      "https://media.istockphoto.com/id/1058181752/video/beautiful-slow-motion-video-of-some-pigeons-flying-at-sunset-on-the-udaipur-city-palace.mp4?s=mp4-640x640-is&k=20&c=yPpAV-gDnrKPtu_KzfhWbiCyHwszBBZvsBzBdv5hznk=",
+      "https://media.istockphoto.com/id/1616806621/video/dramatic-performance-done-by-an-indian-girls-practicing-the-art-of-bharatanatyam-in-an.mp4?s=mp4-640x640-is&k=20&c=Mg6ysqiMnZHdSHSuFbkvRb1TZfYEHHJlQwSaVQpP6hM=",
+      "https://cdn.pixabay.com/video/2022/07/27/125692-735655836_large.mp4"
+    ];
+
+    let currentVideo = 0;
+    let isPlaylistActive = true;
+
+    function playVideo(index) {
+      bgVideo.src = videos[index];
+      bgVideo.load();
+      bgVideo.play().catch(() => {}); // no auto pop-ups
+    }
+
+    bgVideo.addEventListener("ended", () => {
+      if (isPlaylistActive) {
+        currentVideo = (currentVideo + 1) % videos.length;
+        playVideo(currentVideo);
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      playVideo(currentVideo);
+    });
+
+    // ===== LOGIN MODAL =====
+    function openLogin() {
+      document.getElementById("loginModal").style.display = "flex";
+    }
+    function closeLogin() {
+      document.getElementById("loginModal").style.display = "none";
+    }
+    function submitLogin() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      if(email && password){
+        alert("Email: " + email + "\\nPassword: " + password);
+        closeLogin();
+      } else {
+        alert("Please enter both email and password!");
+      }
+    }
+
+    // ===== GPS MODAL =====
+    function openGPS() {
+      isPlaylistActive = false;
+      bgVideo.src = "https://cdn.pixabay.com/video/2022/06/10/119843-719443761_large.mp4";
+      bgVideo.load();
+      bgVideo.play();
+      document.getElementById("gpsModal").style.display = "flex";
+    }
+    function closeGPS() {
+      document.getElementById("gpsModal").style.display = "none";
+      isPlaylistActive = true;
+      playVideo(currentVideo);
+    }
+    function getLocation() {
+      // Run ONLY when user clicks "Allow"
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          alert("Your Location: " + position.coords.latitude + ", " + position.coords.longitude);
+          closeGPS();
+        }, () => {
+          alert("Unable to fetch location.");
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+
+    // ===== State Zoom Effect =====
+    document.querySelectorAll(".state-list li").forEach(state => {
+      state.addEventListener("click", () => {
+        state.classList.add("zoom-pop");
+        setTimeout(() => {
+          state.classList.remove("zoom-pop");
+        }, 600);
+      });
+    });
+  </script>
+</body>
+</html>
